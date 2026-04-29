@@ -177,7 +177,33 @@ npm run dev
 
 ## Screenshots
 
-> Coming soon — add your screenshots here.
+### 🏠 Home Page
+<div align="center">
+<img src="Screenshots/Screenshot 2026-04-29 at 3.44.43 PM.png" alt="Home Page — Hero Section" width="45%"/>
+<img src="Screenshots/Screenshot 2026-04-29 at 3.46.04 PM.png" alt="Home Page — Products & Promo Banner" width="45%"/>
+</div>
+
+### 🛍️ Customer Pages
+<div align="center">
+<img src="Screenshots/Screenshot 2026-04-29 at 3.45.39 PM.png" alt="Products Listing — Filters & Grid" width="45%"/>
+<img src="Screenshots/Screenshot 2026-04-29 at 3.45.30 PM.png" alt="Vendors Marketplace" width="45%"/>
+</div>
+
+<div align="center">
+<img src="Screenshots/Screenshot 2026-04-29 at 3.45.47 PM.png" alt="My Orders Page" width="45%"/>
+<img src="Screenshots/Screenshot 2026-04-29 at 3.45.04 PM.png" alt="Account Profile" width="45%"/>
+</div>
+
+### 🛡️ Admin Panel
+<div align="center">
+<img src="Screenshots/Screenshot 2026-04-29 at 3.46.20 PM.png" alt="Admin Dashboard" width="45%"/>
+<img src="Screenshots/Screenshot 2026-04-29 at 3.46.47 PM.png" alt="Admin Monthly Sales Reports" width="45%"/>
+</div>
+
+### 👑 Super Admin Panel
+<div align="center">
+<img src="Screenshots/Screenshot 2026-04-29 at 3.43.59 PM.png" alt="Super Admin Dashboard — User Roles & Stats" width="60%"/>
+</div>
 
 ---
 
