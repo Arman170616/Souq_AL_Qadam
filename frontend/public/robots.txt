@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Block admin & vendor panels from indexing
+Disallow: /admin/
+Disallow: /vendor/
+Disallow: /auth/
+
+Sitemap: https://bdshoe.com/sitemap.xml

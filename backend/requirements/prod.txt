@@ -1,0 +1,4 @@
+# Prod
+-r base.txt
+gunicorn
+whitenoise

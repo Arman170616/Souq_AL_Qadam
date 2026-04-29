@@ -1,0 +1,52 @@
+name: bdshoe
+description: "BDShoe Multi-Vendor Shoe Marketplace"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # Navigation
+  go_router: ^14.0.0
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # HTTP
+  dio: ^5.4.3
+
+  # Secure storage (JWT)
+  flutter_secure_storage: ^9.2.2
+
+  # Images
+  cached_network_image: ^3.4.1
+
+  # Local storage
+  shared_preferences: ^2.3.3
+
+  # UI
+  google_fonts: ^6.2.1
+  shimmer: ^3.0.0
+
+  # Charts (vendor/admin reports)
+  fl_chart: ^0.69.0
+
+  # Utils
+  intl: ^0.19.0
+  url_launcher: ^6.3.0
+  image_picker: ^1.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
