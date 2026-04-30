@@ -5,9 +5,13 @@ import { motion } from 'framer-motion';
 import { Store, MapPin, Phone, Mail, FileText, ArrowRight } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { vendorsApi } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 import toast from 'react-hot-toast';
 
+const OMAN_CITIES = ['Muscat','Salalah','Sohar','Nizwa','Sur','Ibri','Barka','Rustaq','Khasab','Duqm'];
+
 export default function VendorRegisterPage() {
+  const t = useT();
   const router = useRouter();
   const qc = useQueryClient();
   const [loading, setLoading] = useState(false);
@@ -19,16 +23,16 @@ export default function VendorRegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.shop_name.trim()) { toast.error('Shop name is required'); return; }
+    if (!form.shop_name.trim()) { toast.error(t('ven.register.shopNameRequired')); return; }
     setLoading(true);
     try {
       await vendorsApi.register(form);
-      toast.success('Vendor application submitted! Awaiting admin approval.');
+      toast.success(t('ven.register.success'));
       qc.invalidateQueries({ queryKey: ['vendor-me'] });
       router.push('/vendor');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(msg || 'Registration failed. Please try again.');
+      toast.error(msg || t('ven.register.failed'));
     } finally {
       setLoading(false);
     }
@@ -44,73 +48,77 @@ export default function VendorRegisterPage() {
             <Store size={20} className="text-white"/>
           </div>
           <div>
-            <h1 className="text-xl font-black text-white">Create Vendor Profile</h1>
-            <p className="text-xs text-white/40">Complete your profile to start selling</p>
+            <h1 className="text-xl font-black text-white">{t('ven.register.title')}</h1>
+            <p className="text-xs text-white/40">{t('ven.register.subtitle')}</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-white/60 mb-1.5">Shop Name <span className="text-red-400">*</span></label>
+            <label className="block text-xs font-semibold text-white/60 mb-1.5">
+              {t('ven.register.shopName')} <span className="text-red-400">*</span>
+            </label>
             <div className="relative">
-              <Store size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"/>
+              <Store size={14} className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-white/30"/>
               <input value={form.shop_name} onChange={e => set('shop_name', e.target.value)}
-                placeholder="Your shop name" required className="glass-input pl-9 text-sm"/>
+                required className="glass-input ps-9 text-sm"/>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-white/60 mb-1.5">Description</label>
+            <label className="block text-xs font-semibold text-white/60 mb-1.5">{t('ven.register.description')}</label>
             <textarea value={form.description} onChange={e => set('description', e.target.value)}
-              placeholder="Tell customers about your shop…" rows={3}
+              placeholder={t('ven.register.descPlaceholder')} rows={3}
               className="glass-input text-sm resize-none"/>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-white/60 mb-1.5">City</label>
+              <label className="block text-xs font-semibold text-white/60 mb-1.5">{t('ven.register.city')}</label>
               <div className="relative">
-                <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"/>
-                <input value={form.city} onChange={e => set('city', e.target.value)}
-                  placeholder="Dhaka" className="glass-input pl-9 text-sm"/>
+                <MapPin size={14} className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-white/30"/>
+                <select value={form.city} onChange={e => set('city', e.target.value)} className="glass-input ps-9 text-sm">
+                  <option value="" className="bg-gray-900">—</option>
+                  {OMAN_CITIES.map(c => <option key={c} className="bg-gray-900">{c}</option>)}
+                </select>
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-white/60 mb-1.5">Phone</label>
+              <label className="block text-xs font-semibold text-white/60 mb-1.5">{t('ven.register.phone')}</label>
               <div className="relative">
-                <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"/>
+                <Phone size={14} className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-white/30"/>
                 <input value={form.phone} onChange={e => set('phone', e.target.value)}
-                  placeholder="+880…" className="glass-input pl-9 text-sm"/>
+                  placeholder="+968 9xxx xxxx" className="glass-input ps-9 text-sm"/>
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-white/60 mb-1.5">Business Email</label>
+            <label className="block text-xs font-semibold text-white/60 mb-1.5">{t('ven.register.email')}</label>
             <div className="relative">
-              <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"/>
+              <Mail size={14} className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-white/30"/>
               <input type="email" value={form.email} onChange={e => set('email', e.target.value)}
-                placeholder="shop@example.com" className="glass-input pl-9 text-sm"/>
+                placeholder="shop@example.com" className="glass-input ps-9 text-sm"/>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-white/60 mb-1.5">Address</label>
+            <label className="block text-xs font-semibold text-white/60 mb-1.5">{t('ven.register.address')}</label>
             <div className="relative">
-              <FileText size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"/>
+              <FileText size={14} className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-white/30"/>
               <input value={form.address} onChange={e => set('address', e.target.value)}
-                placeholder="Full address" className="glass-input pl-9 text-sm"/>
+                placeholder={t('ven.register.addressPlaceholder')} className="glass-input ps-9 text-sm"/>
             </div>
           </div>
 
           <div className="glass rounded-xl p-3 text-xs text-white/40 mt-2">
-            After submitting, your application will be reviewed by an admin. You will be able to add products once approved.
+            {t('ven.register.note')}
           </div>
 
           <button type="submit" disabled={loading}
             className="btn-primary w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 mt-2 disabled:opacity-60">
             {loading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/> : <ArrowRight size={16}/>}
-            {loading ? 'Submitting…' : 'Submit Application'}
+            {loading ? t('ven.register.submitting') : t('ven.register.submit')}
           </button>
         </form>
       </motion.div>

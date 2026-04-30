@@ -5,6 +5,7 @@ import { Search, Download } from 'lucide-react';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ordersApi } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 import toast from 'react-hot-toast';
 
 const STATUS_BADGE: Record<string,string> = { pending:'badge-amber', confirmed:'badge-purple', processing:'badge-purple', shipped:'badge-amber', delivered:'badge-green', cancelled:'badge-red' };
@@ -18,6 +19,7 @@ interface Order {
 }
 
 export default function AdminOrdersPage() {
+  const t = useT();
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const qc = useQueryClient();
@@ -36,10 +38,10 @@ export default function AdminOrdersPage() {
     mutationFn: ({ orderNumber, status }: { orderNumber: string; status: string }) =>
       ordersApi.updateStatus(orderNumber, status),
     onSuccess: () => {
-      toast.success('Order status updated');
+      toast.success(t('adm.orders.statusUpdated'));
       qc.invalidateQueries({ queryKey: ['admin-orders'] });
     },
-    onError: () => toast.error('Failed to update status'),
+    onError: () => toast.error(t('adm.orders.failedUpdate')),
   });
 
   const exportCSV = () => {
@@ -54,32 +56,46 @@ export default function AdminOrdersPage() {
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-black text-white">Order Management</h2>
+        <h2 className="text-2xl font-black text-white">{t('adm.orders.title')}</h2>
         <button onClick={exportCSV} className="btn-glass px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm">
-          <Download size={15}/> Export CSV
+          <Download size={15}/> {t('adm.orders.exportCsv')}
         </button>
       </div>
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 max-w-xs">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40"/>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Order number…" className="glass-input pl-8 text-sm py-2"/>
+          <Search size={14} className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-white/40"/>
+          <input value={search} onChange={e=>setSearch(e.target.value)}
+            placeholder={t('adm.orders.search')} className="glass-input ps-8 text-sm py-2"/>
         </div>
         <div className="flex gap-1 glass-dark rounded-xl p-1 flex-wrap">
           {FILTERS.map(f=>(
-            <button key={f} onClick={()=>setFilter(f)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${filter===f?'bg-red-500/80 text-white':'text-white/50 hover:text-white'}`}>{f}</button>
+            <button key={f} onClick={()=>setFilter(f)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${filter===f?'bg-red-500/80 text-white':'text-white/50 hover:text-white'}`}>
+              {f}
+            </button>
           ))}
         </div>
       </div>
 
       <div className="glass-card overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-white/40">Loading orders…</div>
+          <div className="p-8 text-center text-white/40">{t('adm.orders.loading')}</div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-white/40">No orders found</div>
+          <div className="p-8 text-center text-white/40">{t('adm.orders.noOrders')}</div>
         ) : (
           <table className="glass-table">
-            <thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+            <thead>
+              <tr>
+                <th>{t('adm.orders.colOrder')}</th>
+                <th>{t('adm.orders.colCustomer')}</th>
+                <th>{t('adm.orders.colItems')}</th>
+                <th>{t('adm.orders.colTotal')}</th>
+                <th>{t('adm.orders.colStatus')}</th>
+                <th>{t('adm.orders.colDate')}</th>
+                <th>{t('adm.orders.colAction')}</th>
+              </tr>
+            </thead>
             <tbody>
               {filtered.map(o => (
                 <tr key={o.order_number}>

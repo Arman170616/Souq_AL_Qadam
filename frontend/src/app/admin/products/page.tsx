@@ -5,6 +5,7 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import { Search, Trash2, ToggleLeft, ToggleRight, Star, Package, Loader2 } from 'lucide-react';
 import { productsApi } from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 import toast from 'react-hot-toast';
 
 interface Product {
@@ -17,6 +18,7 @@ interface Product {
 interface ProductPage { count: number; next: string | null; results: Product[]; }
 
 export default function AdminProductsPage() {
+  const t = useT();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -24,7 +26,7 @@ export default function AdminProductsPage() {
 
   const queryParams = {
     search: search || undefined,
-    is_active:  filter === 'active'   ? true  : filter === 'inactive' ? false : undefined,
+    is_active:   filter === 'active'   ? true  : filter === 'inactive' ? false : undefined,
     is_featured: filter === 'featured' ? true  : undefined,
   };
 
@@ -41,7 +43,6 @@ export default function AdminProductsPage() {
   const products: Product[] = data?.pages.flatMap(p => p.results) ?? [];
   const totalCount = data?.pages[0]?.count ?? 0;
 
-  // Scroll sentinel
   const handleIntersect = useCallback((entries: IntersectionObserverEntry[]) => {
     if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
@@ -57,14 +58,14 @@ export default function AdminProductsPage() {
   const toggleMutation = useMutation({
     mutationFn: ({ id, field, value }: { id: number; field: string; value: boolean }) =>
       productsApi.update(id, { [field]: value }),
-    onSuccess: () => { toast.success('Updated'); qc.invalidateQueries({ queryKey: ['admin-products'] }); },
-    onError: () => toast.error('Update failed'),
+    onSuccess: () => { toast.success(t('adm.products.updated')); qc.invalidateQueries({ queryKey: ['admin-products'] }); },
+    onError: () => toast.error(t('adm.products.updateFailed')),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => productsApi.delete(id),
-    onSuccess: () => { toast.success('Product deleted'); qc.invalidateQueries({ queryKey: ['admin-products'] }); },
-    onError: () => toast.error('Delete failed'),
+    onSuccess: () => { toast.success(t('adm.products.deleted')); qc.invalidateQueries({ queryKey: ['admin-products'] }); },
+    onError: () => toast.error(t('adm.products.deleteFailed')),
   });
 
   const FILTERS = ['all', 'active', 'inactive', 'featured'];
@@ -73,19 +74,20 @@ export default function AdminProductsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-2xl font-black text-white">Products</h2>
+          <h2 className="text-2xl font-black text-white">{t('adm.products.title')}</h2>
           <p className="text-white/50 text-sm mt-0.5">
-            {isLoading ? 'Loading…' : `${products.length} of ${totalCount} products`}
+            {isLoading
+              ? t('adm.products.loading')
+              : t('adm.products.of').replace('{n}', String(products.length)).replace('{total}', String(totalCount))}
           </p>
         </div>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 max-w-xs">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40"/>
+          <Search size={14} className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-white/40"/>
           <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search products…" className="glass-input pl-8 text-sm py-2"/>
+            placeholder={t('adm.products.search')} className="glass-input ps-8 text-sm py-2"/>
         </div>
         <div className="flex gap-1 glass-dark rounded-xl p-1">
           {FILTERS.map(f => (
@@ -97,22 +99,27 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="glass-card overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-white/40">Loading products…</div>
+          <div className="p-8 text-center text-white/40">{t('adm.products.loading')}</div>
         ) : products.length === 0 ? (
           <div className="p-12 text-center">
             <Package size={32} className="text-white/20 mx-auto mb-3"/>
-            <p className="text-white/40">No products found</p>
+            <p className="text-white/40">{t('adm.products.empty')}</p>
           </div>
         ) : (
           <table className="glass-table">
             <thead>
               <tr>
-                <th>Product</th><th>Vendor</th><th>Category</th>
-                <th>Price</th><th>Stock</th><th>Rating</th>
-                <th>Active</th><th>Featured</th><th>Actions</th>
+                <th>{t('adm.products.colProduct')}</th>
+                <th>{t('adm.products.colVendor')}</th>
+                <th>{t('adm.products.colCategory')}</th>
+                <th>{t('adm.products.colPrice')}</th>
+                <th>{t('adm.products.colStock')}</th>
+                <th>{t('adm.products.colRating')}</th>
+                <th>{t('adm.products.colActive')}</th>
+                <th>{t('adm.products.colFeatured')}</th>
+                <th>{t('adm.products.colActions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -167,15 +174,16 @@ export default function AdminProductsPage() {
         )}
       </div>
 
-      {/* Infinite scroll sentinel */}
       <div ref={sentinelRef} className="flex justify-center py-4">
         {isFetchingNextPage && (
           <div className="flex items-center gap-2 text-white/40 text-sm">
-            <Loader2 size={16} className="animate-spin"/> Loading more…
+            <Loader2 size={16} className="animate-spin"/> {t('adm.products.loadingMore')}
           </div>
         )}
         {!hasNextPage && products.length > 0 && !isLoading && (
-          <p className="text-white/20 text-xs">All {totalCount} products loaded</p>
+          <p className="text-white/20 text-xs">
+            {t('adm.products.allLoaded').replace('{n}', String(totalCount))}
+          </p>
         )}
       </div>
     </motion.div>

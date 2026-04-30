@@ -5,18 +5,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutDashboard, Package, ShoppingBag, BarChart2, Settings, Menu, X, ChevronRight, LogOut, Bell } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
-const NAV = [
-  { href:'/vendor',          label:'Dashboard', icon:LayoutDashboard },
-  { href:'/vendor/products', label:'Products',  icon:Package },
-  { href:'/vendor/orders',   label:'Orders',    icon:ShoppingBag },
-  { href:'/vendor/reports',  label:'Reports',   icon:BarChart2 },
-  { href:'/vendor/settings', label:'Settings',  icon:Settings },
-];
-
 export default function VendorLayout({ children }: { children: React.ReactNode }) {
+  const t = useT();
   const [sidebarOpen, setSidebar] = useState(false);
   const [isMobile, setIsMobile]   = useState(false);
   const [authReady, setAuthReady] = useState(false);
@@ -24,26 +18,27 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
   const router   = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
 
+  const NAV = [
+    { href:'/vendor',          label: t('ven.nav.dashboard'), icon: LayoutDashboard },
+    { href:'/vendor/products', label: t('ven.nav.products'),  icon: Package },
+    { href:'/vendor/orders',   label: t('ven.nav.orders'),    icon: ShoppingBag },
+    { href:'/vendor/reports',  label: t('ven.nav.reports'),   icon: BarChart2 },
+    { href:'/vendor/settings', label: t('ven.nav.settings'),  icon: Settings },
+  ];
+
   const handleLogout = () => { logout(); router.push('/'); };
 
-  // ── RBAC guard ─────────────────────────────────────
-  useEffect(() => {
-    setAuthReady(true);
-  }, []);
+  useEffect(() => { setAuthReady(true); }, []);
 
   useEffect(() => {
     if (!authReady) return;
-    if (!isAuthenticated) {
-      router.replace(`/login?next=${pathname}`);
-      return;
-    }
+    if (!isAuthenticated) { router.replace(`/login?next=${pathname}`); return; }
     if (user?.role !== 'vendor' && user?.role !== 'admin') {
-      toast.error('Vendor account required.');
+      toast.error(t('ven.accessDenied'));
       router.replace('/');
     }
   }, [authReady, isAuthenticated, user, router, pathname]);
 
-  // ── Responsive sidebar ──────────────────────────────
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
     setIsMobile(mq.matches);
@@ -59,7 +54,6 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
 
   useEffect(() => { if (isMobile) setSidebar(false); }, [pathname, isMobile]);
 
-  // Show nothing while auth check is in-flight or if wrong role
   if (!authReady || !isAuthenticated || (user?.role !== 'vendor' && user?.role !== 'admin')) {
     return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin"/></div>;
   }
@@ -72,9 +66,9 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
         </div>
         <div>
           <p className="font-bold gradient-text text-sm leading-none">Souq Al Qadam</p>
-          <p className="text-xs text-white/40 mt-0.5">Vendor Panel</p>
+          <p className="text-xs text-white/40 mt-0.5">{t('ven.panel')}</p>
         </div>
-        <button onClick={() => setSidebar(false)} className="ml-auto p-1 rounded-lg hover:bg-white/10 text-white/50 shrink-0 md:hidden">
+        <button onClick={() => setSidebar(false)} className="ms-auto p-1 rounded-lg hover:bg-white/10 text-white/50 shrink-0 md:hidden">
           <X size={15}/>
         </button>
       </div>
@@ -88,7 +82,7 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
                 active ? 'bg-indigo-500/20 vendor-nav-active' : 'text-white/60 hover:bg-white/10 hover:text-white')}>
               <item.icon size={18} className="shrink-0"/>
               <span>{item.label}</span>
-              {active && <ChevronRight size={14} className="ml-auto opacity-60"/>}
+              {active && <ChevronRight size={14} className="ms-auto opacity-60"/>}
             </Link>
           );
         })}
@@ -105,7 +99,7 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
           </div>
         </div>
         <button onClick={handleLogout} className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all w-full">
-          <LogOut size={15} className="shrink-0"/> Sign Out
+          <LogOut size={15} className="shrink-0"/> {t('ven.signOut')}
         </button>
       </div>
     </>
@@ -113,7 +107,6 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="flex min-h-screen">
-      {/* Mobile overlay */}
       <AnimatePresence>
         {isMobile && sidebarOpen && (
           <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
@@ -122,20 +115,18 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <motion.aside
         animate={{ x: isMobile ? (sidebarOpen ? 0 : -260) : 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className={cn(
-          'glass-dark flex flex-col h-screen overflow-hidden border-r border-white/10 z-50',
-          isMobile ? 'fixed top-0 left-0 w-64' : 'sticky top-0 w-60 shrink-0',
+          'glass-dark flex flex-col h-screen overflow-hidden border-e border-white/10 z-50',
+          isMobile ? 'fixed top-0 inset-s-0 w-64' : 'sticky top-0 w-60 shrink-0',
         )}
       >
         {sidebarContent}
       </motion.aside>
 
       <div className="flex-1 overflow-auto min-w-0">
-        {/* Top bar */}
         <div className="sticky top-0 z-20 glass-dark border-b border-white/10 px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebar(!sidebarOpen)}
@@ -143,14 +134,14 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
               <Menu size={16}/>
             </button>
             <h2 className="font-semibold text-white text-sm sm:text-base capitalize">
-              {NAV.find(n => n.href === pathname)?.label || 'Vendor Dashboard'}
+              {NAV.find(n => n.href === pathname)?.label || t('ven.nav.dashboard')}
             </h2>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <button className="relative p-2 rounded-lg glass hover:bg-white/15 transition-all text-white/60 hover:text-white">
-              <Bell size={16}/><span className="absolute top-1 right-1 w-2 h-2 bg-indigo-500 rounded-full"/>
+              <Bell size={16}/><span className="absolute top-1 inset-e-1 w-2 h-2 bg-indigo-500 rounded-full"/>
             </button>
-            <Link href="/" className="btn-glass text-xs px-3 py-2 rounded-lg hidden sm:inline-flex">View Store</Link>
+            <Link href="/" className="btn-glass text-xs px-3 py-2 rounded-lg hidden sm:inline-flex">{t('ven.viewStore')}</Link>
           </div>
         </div>
         <main className="p-4 sm:p-6 overflow-x-auto">{children}</main>

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Search, Users, ShoppingBag, Store, Shield, CheckCircle2, XCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 import toast from 'react-hot-toast';
 
 interface Customer {
@@ -22,6 +23,7 @@ const ROLE_ICON: Record<string, React.ReactNode> = {
 const FILTERS = ['all', 'customer', 'vendor', 'admin'];
 
 export default function AdminCustomersPage() {
+  const t = useT();
   const [search, setSearch] = useState('');
   const [role, setRole]     = useState('all');
   const qc = useQueryClient();
@@ -37,10 +39,10 @@ export default function AdminCustomersPage() {
   const verifyMutation = useMutation({
     mutationFn: (id: number) => usersApi.verifyUser(id).then(r => r.data),
     onSuccess: (updated: Customer) => {
-      toast.success(updated.is_verified ? 'User verified' : 'Verification removed');
+      toast.success(updated.is_verified ? t('adm.customers.userVerified') : t('adm.customers.verifyRemoved'));
       qc.invalidateQueries({ queryKey: ['admin-customers'] });
     },
-    onError: () => toast.error('Action failed'),
+    onError: () => toast.error(t('adm.customers.actionFailed')),
   });
 
   const customers: Customer[] = (() => {
@@ -54,16 +56,15 @@ export default function AdminCustomersPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-2xl font-black text-white">Users</h2>
-        <p className="text-white/50 text-sm">{customers.length} users</p>
+        <h2 className="text-2xl font-black text-white">{t('adm.customers.title')}</h2>
+        <p className="text-white/50 text-sm">{t('adm.customers.count').replace('{n}', String(customers.length))}</p>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 max-w-xs">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40"/>
+          <Search size={14} className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-white/40"/>
           <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name or email…" className="glass-input pl-8 text-sm py-2"/>
+            placeholder={t('adm.customers.search')} className="glass-input ps-8 text-sm py-2"/>
         </div>
         <div className="flex gap-1 glass-dark rounded-xl p-1">
           {FILTERS.map(f => (
@@ -75,21 +76,24 @@ export default function AdminCustomersPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="glass-card overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-white/40">Loading users…</div>
+          <div className="p-8 text-center text-white/40">{t('adm.customers.loading')}</div>
         ) : customers.length === 0 ? (
           <div className="p-12 text-center">
             <Users size={32} className="text-white/20 mx-auto mb-3"/>
-            <p className="text-white/40">No users found</p>
+            <p className="text-white/40">{t('adm.customers.empty')}</p>
           </div>
         ) : (
           <table className="glass-table">
             <thead>
               <tr>
-                <th>Name</th><th>Email</th><th>Role</th>
-                <th>Verified</th><th>Joined</th><th>Actions</th>
+                <th>{t('adm.customers.colName')}</th>
+                <th>{t('adm.customers.colEmail')}</th>
+                <th>{t('adm.customers.colRole')}</th>
+                <th>{t('adm.customers.colVerified')}</th>
+                <th>{t('adm.customers.colJoined')}</th>
+                <th>{t('adm.customers.colActions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -113,7 +117,7 @@ export default function AdminCustomersPage() {
                     </td>
                     <td>
                       <span className={`badge ${c.is_verified ? 'badge-green' : 'badge-red'}`}>
-                        {c.is_verified ? 'Verified' : 'Unverified'}
+                        {c.is_verified ? t('adm.customers.verified') : t('adm.customers.unverified')}
                       </span>
                     </td>
                     <td>
@@ -125,7 +129,6 @@ export default function AdminCustomersPage() {
                       <button
                         onClick={() => verifyMutation.mutate(c.id)}
                         disabled={verifyMutation.isPending}
-                        title={c.is_verified ? 'Remove verification' : 'Verify user'}
                         className={`p-1.5 rounded-lg transition-colors ${
                           c.is_verified
                             ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'

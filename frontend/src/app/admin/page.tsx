@@ -4,6 +4,7 @@ import { DollarSign, Store, ShoppingBag } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { vendorsApi, ordersApi } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'badge-amber', confirmed: 'badge-purple', processing: 'badge-purple',
@@ -11,6 +12,8 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AdminDashboard() {
+  const t = useT();
+
   const { data: orderData } = useQuery({
     queryKey: ['admin-orders-recent'],
     queryFn: () => ordersApi.adminOrders({ ordering: '-created_at' }).then(r => r.data),
@@ -30,19 +33,18 @@ export default function AdminDashboard() {
   const totalRevenue  = recentOrders.reduce((s: number, o: { total: string }) => s + parseFloat(o.total || '0'), 0);
 
   const STATS = [
-    { label: 'Total Orders',    value: String(totalOrders),   icon: ShoppingBag, color: 'from-pink-500/20 to-rose-500/20',    iconColor: 'text-pink-400' },
-    { label: 'Active Vendors',  value: String(activeVendors), icon: Store,       color: 'from-amber-500/20 to-orange-500/20',  iconColor: 'text-amber-400' },
-    { label: 'Revenue (recent)',value: formatPrice(totalRevenue), icon: DollarSign, color: 'from-green-500/20 to-emerald-500/20', iconColor: 'text-green-400' },
+    { label: t('adm.dash.totalOrders'),   value: String(totalOrders),      icon: ShoppingBag, color: 'from-pink-500/20 to-rose-500/20',    iconColor: 'text-pink-400' },
+    { label: t('adm.dash.activeVendors'), value: String(activeVendors),    icon: Store,       color: 'from-amber-500/20 to-orange-500/20',  iconColor: 'text-amber-400' },
+    { label: t('adm.dash.revenueRecent'), value: formatPrice(totalRevenue), icon: DollarSign,  color: 'from-green-500/20 to-emerald-500/20', iconColor: 'text-green-400' },
   ];
 
   return (
     <div className="p-6 lg:p-8 space-y-8">
       <div>
-        <h1 className="text-2xl font-black text-white">Admin Dashboard</h1>
-        <p className="text-white/50 text-sm mt-1">Platform overview</p>
+        <h1 className="text-2xl font-black text-white">{t('adm.dash.title')}</h1>
+        <p className="text-white/50 text-sm mt-1">{t('adm.dash.subtitle')}</p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {STATS.map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
@@ -56,13 +58,12 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Recent Orders */}
       <div className="glass-card p-6">
         <h2 className="font-bold text-white mb-4 flex items-center gap-2">
-          <ShoppingBag size={16} className="text-indigo-400" /> Recent Orders
+          <ShoppingBag size={16} className="text-indigo-400" /> {t('adm.dash.recentOrders')}
         </h2>
         {recentOrders.length === 0 ? (
-          <p className="text-white/40 text-sm text-center py-6">No orders yet</p>
+          <p className="text-white/40 text-sm text-center py-6">{t('adm.dash.noOrders')}</p>
         ) : (
           <div className="space-y-3">
             {recentOrders.map((o: { order_number: string; total: string; status: string; created_at: string }) => (

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Search, ShieldAlert } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { vendorsApi } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 
 const STATUS_BADGE: Record<string,string> = { approved:'badge-green', pending:'badge-amber', suspended:'badge-red', rejected:'badge-red' };
 const FILTERS = ['all','pending','approved','suspended','rejected'];
@@ -15,6 +16,7 @@ interface Vendor {
 }
 
 export default function AdminVendorsPage() {
+  const t = useT();
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
 
@@ -32,35 +34,43 @@ export default function AdminVendorsPage() {
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} className="space-y-5">
       <div className="flex items-start justify-between gap-4">
-        <h2 className="text-2xl font-black text-white">Vendor Management</h2>
+        <h2 className="text-2xl font-black text-white">{t('adm.vendors.title')}</h2>
         <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-semibold">
-          <ShieldAlert size={14}/> Approval managed by Super Admin
+          <ShieldAlert size={14}/> {t('adm.vendors.superAdminNote')}
         </div>
       </div>
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 max-w-xs">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40"/>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search vendors…" className="glass-input pl-8 text-sm py-2"/>
+          <Search size={14} className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-white/40"/>
+          <input value={search} onChange={e=>setSearch(e.target.value)}
+            placeholder={t('adm.vendors.search')} className="glass-input ps-8 text-sm py-2"/>
         </div>
         <div className="flex gap-1 glass-dark rounded-xl p-1">
           {FILTERS.map(f=>(
-            <button key={f} onClick={()=>setFilter(f)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${filter===f?'bg-red-500/80 text-white':'text-white/50 hover:text-white'}`}>{f}</button>
+            <button key={f} onClick={()=>setFilter(f)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${filter===f?'bg-red-500/80 text-white':'text-white/50 hover:text-white'}`}>
+              {f}
+            </button>
           ))}
         </div>
       </div>
 
       <div className="glass-card overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-white/40">Loading vendors…</div>
+          <div className="p-8 text-center text-white/40">{t('adm.vendors.loading')}</div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-white/40">No vendors found</div>
+          <div className="p-8 text-center text-white/40">{t('adm.vendors.empty')}</div>
         ) : (
           <table className="glass-table">
             <thead>
               <tr>
-                <th>Shop</th><th>Owner</th><th>Status</th>
-                <th>Rating</th><th>Sales</th><th>Joined</th>
+                <th>{t('adm.vendors.colShop')}</th>
+                <th>{t('adm.vendors.colOwner')}</th>
+                <th>{t('adm.vendors.colStatus')}</th>
+                <th>{t('adm.vendors.colRating')}</th>
+                <th>{t('adm.vendors.colSales')}</th>
+                <th>{t('adm.vendors.colJoined')}</th>
               </tr>
             </thead>
             <tbody>

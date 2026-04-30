@@ -5,6 +5,7 @@ import { Download, FileText, FileSpreadsheet } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { ordersApi } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 
 const PIE_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#8b5cf6','#06b6d4','#f97316'];
 
@@ -23,6 +24,8 @@ interface Analytics {
 }
 
 export default function AdminReportsPage() {
+  const t = useT();
+
   const { data, isLoading } = useQuery<Analytics>({
     queryKey: ['admin-analytics'],
     queryFn:  () => ordersApi.adminAnalytics().then(r => r.data),
@@ -50,14 +53,17 @@ export default function AdminReportsPage() {
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-2xl font-black text-white">Platform Reports</h2>
+        <h2 className="text-2xl font-black text-white">{t('adm.reports.title')}</h2>
         <div className="flex gap-2">
-          <button className="btn-glass px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm"><FileText size={15}/> PDF</button>
-          <button onClick={exportCSV} className="btn-primary px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm"><FileSpreadsheet size={15}/> Excel</button>
+          <button className="btn-glass px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm">
+            <FileText size={15}/> PDF
+          </button>
+          <button onClick={exportCSV} className="btn-primary px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm">
+            <FileSpreadsheet size={15}/> Excel
+          </button>
         </div>
       </div>
 
-      {/* Summary cards */}
       {isLoading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_,i) => <div key={i} className="glass-card p-5 h-24 animate-pulse"/>)}
@@ -65,10 +71,10 @@ export default function AdminReportsPage() {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: 'Total Revenue',    value: formatPrice(summary?.total_revenue    ?? 0), sub: 'All-time GMV' },
-            { label: 'Commission Earned',value: formatPrice(summary?.total_commission ?? 0), sub: '10% avg commission' },
-            { label: 'Total Orders',     value: (summary?.total_orders ?? 0).toLocaleString(),sub: 'All-time orders' },
-            { label: 'Active Vendors',   value: (summary?.active_vendors ?? 0).toString(),   sub: `${summary?.pending_vendors ?? 0} pending approval` },
+            { label: t('adm.reports.totalRevenue'),      value: formatPrice(summary?.total_revenue    ?? 0), sub: t('adm.reports.allTimeGmv') },
+            { label: t('adm.reports.commissionEarned'),  value: formatPrice(summary?.total_commission ?? 0), sub: t('adm.reports.avgCommission') },
+            { label: t('adm.reports.totalOrders'),       value: (summary?.total_orders ?? 0).toLocaleString(),  sub: t('adm.reports.allTimeOrders') },
+            { label: t('adm.reports.activeVendors'),     value: (summary?.active_vendors ?? 0).toString(),      sub: t('adm.reports.pendingApproval').replace('{n}', String(summary?.pending_vendors ?? 0)) },
           ].map(s => (
             <div key={s.label} className="glass-card p-5">
               <p className="text-2xl font-black text-white mb-1">{s.value}</p>
@@ -79,26 +85,26 @@ export default function AdminReportsPage() {
         </div>
       )}
 
-      {/* Revenue & Commission bar chart */}
       <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="font-bold text-white">Revenue & Commission</h3>
+          <h3 className="font-bold text-white">{t('adm.reports.revenueCommission')}</h3>
           <div className="flex gap-4 text-xs text-white/50">
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-indigo-500 inline-block"/>Revenue</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-400 inline-block"/>Commission</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-indigo-500 inline-block"/>{t('adm.reports.revenue')}</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-400 inline-block"/>{t('adm.reports.commission')}</span>
           </div>
         </div>
         {isLoading || monthly.length === 0 ? (
           <div className="h-60 flex items-center justify-center text-white/30 text-sm">
-            {isLoading ? 'Loading…' : 'No data yet'}
+            {isLoading ? t('adm.reports.loading') : t('adm.reports.noData')}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={monthly}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)"/>
               <XAxis dataKey="month" tick={{fill:'rgba(255,255,255,0.4)',fontSize:12}} axisLine={false} tickLine={false}/>
-              <YAxis tick={{fill:'rgba(255,255,255,0.4)',fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>`৳${(v/1000).toFixed(0)}k`}/>
-              <Tooltip contentStyle={{background:'rgba(15,15,40,0.95)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:12,color:'white'}} formatter={(v,n)=>[formatPrice(Number(v)),n==='revenue'?'Revenue':'Commission']}/>
+              <YAxis tick={{fill:'rgba(255,255,255,0.4)',fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>`${(v/1000).toFixed(0)}k`}/>
+              <Tooltip contentStyle={{background:'rgba(15,15,40,0.95)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:12,color:'white'}}
+                formatter={(v,n)=>[formatPrice(Number(v)), n==='revenue' ? t('adm.reports.revenue') : t('adm.reports.commission')]}/>
               <Bar dataKey="revenue"    fill="#6366f1" radius={[4,4,0,0]} opacity={0.8}/>
               <Bar dataKey="commission" fill="#f59e0b" radius={[4,4,0,0]} opacity={0.8}/>
             </BarChart>
@@ -107,12 +113,11 @@ export default function AdminReportsPage() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Category pie */}
         <div className="glass-card p-6">
-          <h3 className="font-bold text-white mb-5">Sales by Category</h3>
+          <h3 className="font-bold text-white mb-5">{t('adm.reports.byCategory')}</h3>
           {isLoading || categories.length === 0 ? (
             <div className="h-44 flex items-center justify-center text-white/30 text-sm">
-              {isLoading ? 'Loading…' : 'No data yet'}
+              {isLoading ? t('adm.reports.loading') : t('adm.reports.noData')}
             </div>
           ) : (
             <div className="flex items-center gap-4">
@@ -137,12 +142,11 @@ export default function AdminReportsPage() {
           )}
         </div>
 
-        {/* Top vendors */}
         <div className="glass-card p-6">
-          <h3 className="font-bold text-white mb-5">Top Vendors by Revenue</h3>
+          <h3 className="font-bold text-white mb-5">{t('adm.reports.topVendors')}</h3>
           {isLoading || topVendors.length === 0 ? (
             <div className="h-44 flex items-center justify-center text-white/30 text-sm">
-              {isLoading ? 'Loading…' : 'No vendor data yet'}
+              {isLoading ? t('adm.reports.loading') : t('adm.reports.noVendorData')}
             </div>
           ) : (
             <div className="space-y-3">
@@ -152,7 +156,7 @@ export default function AdminReportsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between mb-1">
                       <span className="text-sm font-semibold text-white truncate">{v.name}</span>
-                      <span className="text-xs text-white/60 ml-2 shrink-0">{formatPrice(v.revenue)}</span>
+                      <span className="text-xs text-white/60 ms-2 shrink-0">{formatPrice(v.revenue)}</span>
                     </div>
                     <div className="h-1.5 glass rounded-full overflow-hidden">
                       <motion.div
@@ -162,8 +166,8 @@ export default function AdminReportsPage() {
                         className="h-full bg-linear-to-r from-indigo-500 to-purple-500 rounded-full"/>
                     </div>
                     <div className="flex justify-between mt-0.5">
-                      <span className="text-xs text-white/40">{v.orders} orders</span>
-                      <span className="text-xs text-amber-400">Commission: {formatPrice(v.commission)}</span>
+                      <span className="text-xs text-white/40">{v.orders} {t('adm.reports.orders')}</span>
+                      <span className="text-xs text-amber-400">{t('adm.reports.commissionLabel')} {formatPrice(v.commission)}</span>
                     </div>
                   </div>
                 </div>
@@ -173,19 +177,29 @@ export default function AdminReportsPage() {
         </div>
       </div>
 
-      {/* Monthly table */}
       <div className="glass-card overflow-hidden">
         <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-          <h3 className="font-bold text-white">Monthly Summary</h3>
-          <button onClick={exportCSV} className="btn-glass text-xs px-3 py-1.5 rounded-lg flex items-center gap-1"><Download size={12}/>CSV</button>
+          <h3 className="font-bold text-white">{t('adm.reports.monthlySummary')}</h3>
+          <button onClick={exportCSV} className="btn-glass text-xs px-3 py-1.5 rounded-lg flex items-center gap-1">
+            <Download size={12}/>CSV
+          </button>
         </div>
         {isLoading ? (
-          <div className="p-8 text-center text-white/40">Loading…</div>
+          <div className="p-8 text-center text-white/40">{t('adm.reports.loading')}</div>
         ) : monthly.length === 0 ? (
-          <div className="p-8 text-center text-white/40">No orders yet</div>
+          <div className="p-8 text-center text-white/40">{t('adm.reports.noOrders')}</div>
         ) : (
           <table className="glass-table">
-            <thead><tr><th>Month</th><th>GMV</th><th>Commission</th><th>Orders</th><th>Avg Order</th><th>Growth</th></tr></thead>
+            <thead>
+              <tr>
+                <th>{t('adm.reports.colMonth')}</th>
+                <th>{t('adm.reports.colGmv')}</th>
+                <th>{t('adm.reports.commission')}</th>
+                <th>{t('adm.reports.colOrders')}</th>
+                <th>{t('adm.reports.colAvgOrder')}</th>
+                <th>{t('adm.reports.colGrowth')}</th>
+              </tr>
+            </thead>
             <tbody>
               {[...monthly].reverse().map((m,i,arr) => {
                 const prev   = arr[i+1];

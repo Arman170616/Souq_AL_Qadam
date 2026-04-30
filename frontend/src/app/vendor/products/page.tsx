@@ -9,6 +9,7 @@ import {
 import { formatPrice } from '@/lib/utils';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productsApi } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 import toast from 'react-hot-toast';
 
 interface Product {
@@ -16,8 +17,8 @@ interface Product {
   stock: number; is_active: boolean; category_name: string; primary_image: string | null;
 }
 
-// ── Add Product dropdown ───────────────────────────────────────────────────
 function AddProductDropdown() {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -33,21 +34,21 @@ function AddProductDropdown() {
     <div className="relative" ref={ref}>
       <button onClick={() => setOpen(o => !o)}
         className="btn-primary px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm">
-        <Plus size={15}/> Add Product
+        <Plus size={15}/> {t('ven.dash.addProduct')}
         <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`}/>
       </button>
       <AnimatePresence>
         {open && (
           <motion.div initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}
-            className="absolute right-0 top-full mt-2 w-64 glass-dark rounded-2xl overflow-hidden border border-white/10 z-30 shadow-2xl">
+            className="absolute inset-e-0 top-full mt-2 w-64 glass-dark rounded-2xl overflow-hidden border border-white/10 z-30 shadow-2xl">
             <Link href="/vendor/products/new" onClick={() => setOpen(false)}
               className="flex items-start gap-3 px-4 py-3.5 hover:bg-white/8 transition-colors group">
               <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5">
                 <Package size={15} className="text-indigo-400"/>
               </div>
               <div>
-                <p className="text-sm font-semibold text-white group-hover:text-indigo-300 transition-colors">Single Product</p>
-                <p className="text-xs text-white/40 mt-0.5">Add one product with full details, images & variants</p>
+                <p className="text-sm font-semibold text-white group-hover:text-indigo-300 transition-colors">{t('ven.dash.singleProduct')}</p>
+                <p className="text-xs text-white/40 mt-0.5">{t('ven.dash.singleProductDesc')}</p>
               </div>
             </Link>
             <div className="border-t border-white/8"/>
@@ -57,8 +58,8 @@ function AddProductDropdown() {
                 <Upload size={15} className="text-emerald-400"/>
               </div>
               <div>
-                <p className="text-sm font-semibold text-white group-hover:text-emerald-300 transition-colors">Bulk Upload</p>
-                <p className="text-xs text-white/40 mt-0.5">Upload up to 200 products via CSV with auto SKU</p>
+                <p className="text-sm font-semibold text-white group-hover:text-emerald-300 transition-colors">{t('ven.dash.bulkUpload')}</p>
+                <p className="text-xs text-white/40 mt-0.5">{t('ven.dash.bulkUploadDesc')}</p>
               </div>
             </Link>
           </motion.div>
@@ -68,10 +69,10 @@ function AddProductDropdown() {
   );
 }
 
-// ── Main page ──────────────────────────────────────────────────────────────
 interface ProductPage { count: number; next: string | null; results: Product[]; }
 
 export default function VendorProductsPage() {
+  const t = useT();
   const [search, setSearch]       = useState('');
   const [del, setDel]             = useState<number | null>(null);
   const [selected, setSelected]   = useState<Set<number>>(new Set());
@@ -79,25 +80,22 @@ export default function VendorProductsPage() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
 
-  const {
-    data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage,
-  } = useInfiniteQuery<ProductPage>({
-    queryKey: ['vendor-products'],
-    queryFn: ({ pageParam = 1 }) =>
-      productsApi.manage({ page: pageParam as number }).then(r => r.data),
-    getNextPageParam: (last, pages) => last.next ? pages.length + 1 : undefined,
-    initialPageParam: 1,
-  });
+  const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } =
+    useInfiniteQuery<ProductPage>({
+      queryKey: ['vendor-products'],
+      queryFn: ({ pageParam = 1 }) =>
+        productsApi.manage({ page: pageParam as number }).then(r => r.data),
+      getNextPageParam: (last, pages) => last.next ? pages.length + 1 : undefined,
+      initialPageParam: 1,
+    });
 
   const allProducts: Product[] = data?.pages.flatMap(p => p.results) ?? [];
   const totalCount = data?.pages[0]?.count ?? 0;
-
   const filtered = allProducts.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
     p.sku.toLowerCase().includes(search.toLowerCase())
   );
 
-  // scroll sentinel
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -109,11 +107,10 @@ export default function VendorProductsPage() {
     return () => obs.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // ── Selection helpers ────────────────────────────────────────────────────
-  const allFilteredIds   = filtered.map(p => p.id);
-  const allSelected      = allFilteredIds.length > 0 && allFilteredIds.every(id => selected.has(id));
-  const someSelected     = allFilteredIds.some(id => selected.has(id));
-  const selectedInView   = allFilteredIds.filter(id => selected.has(id));
+  const allFilteredIds = filtered.map(p => p.id);
+  const allSelected    = allFilteredIds.length > 0 && allFilteredIds.every(id => selected.has(id));
+  const someSelected   = allFilteredIds.some(id => selected.has(id));
+  const selectedInView = allFilteredIds.filter(id => selected.has(id));
 
   const toggleOne = (id: number) =>
     setSelected(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
@@ -126,68 +123,61 @@ export default function VendorProductsPage() {
       return s;
     });
 
-  // ── Mutations ────────────────────────────────────────────────────────────
   const toggleMutation = useMutation({
     mutationFn: ({ id, is_active }: { id: number; is_active: boolean }) =>
       productsApi.update(id, { is_active }),
-    onSuccess: () => { toast.success('Status updated'); qc.invalidateQueries({ queryKey: ['vendor-products'] }); },
-    onError: () => toast.error('Failed to update'),
+    onSuccess: () => { toast.success(t('ven.products.statusUpdated')); qc.invalidateQueries({ queryKey: ['vendor-products'] }); },
+    onError: () => toast.error(t('ven.products.failedUpdate')),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => productsApi.delete(id),
-    onSuccess: () => { toast.success('Product deleted'); setDel(null); qc.invalidateQueries({ queryKey: ['vendor-products'] }); },
-    onError: () => toast.error('Failed to delete'),
+    onSuccess: () => { toast.success(t('ven.products.deleted')); setDel(null); qc.invalidateQueries({ queryKey: ['vendor-products'] }); },
+    onError: () => toast.error(t('ven.products.failedDelete')),
   });
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: number[]) => {
       const results = await Promise.allSettled(ids.map(id => productsApi.delete(id)));
-      const failed  = results.filter(r => r.status === 'rejected').length;
-      const done    = results.filter(r => r.status === 'fulfilled').length;
-      return { done, failed };
+      return { done: results.filter(r => r.status === 'fulfilled').length, failed: results.filter(r => r.status === 'rejected').length };
     },
     onSuccess: ({ done, failed }) => {
-      toast.success(`${done} product${done !== 1 ? 's' : ''} deleted`);
-      if (failed > 0) toast.error(`${failed} failed to delete`);
+      toast.success(`${done} ${t('ven.products.deleted')}`);
+      if (failed > 0) toast.error(`${failed} ${t('ven.products.failedDelete')}`);
       setSelected(new Set());
       setBulkDelConfirm(false);
       qc.invalidateQueries({ queryKey: ['vendor-products'] });
     },
-    onError: () => toast.error('Bulk delete failed'),
+    onError: () => toast.error(t('ven.products.failedDelete')),
   });
 
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} className="space-y-6">
 
-      {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-black text-white">My Products</h2>
-          <p className="text-sm text-white/50">{totalCount} total products</p>
+          <h2 className="text-2xl font-black text-white">{t('ven.products.title')}</h2>
+          <p className="text-sm text-white/50">{t('ven.products.total').replace('{n}', String(totalCount))}</p>
         </div>
         <AddProductDropdown />
       </div>
 
-      {/* Search + bulk action bar */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative max-w-xs flex-1">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40"/>
+          <Search size={14} className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-white/40"/>
           <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search products…" className="glass-input pl-8 text-sm py-2"/>
+            placeholder={t('ven.products.search')} className="glass-input ps-8 text-sm py-2"/>
         </div>
-
         <AnimatePresence>
           {selectedInView.length > 0 && (
             <motion.div initial={{opacity:0,x:8}} animate={{opacity:1,x:0}} exit={{opacity:0,x:8}}
               className="flex items-center gap-2">
               <span className="text-xs text-white/50 bg-white/10 px-3 py-1.5 rounded-lg font-medium">
-                {selectedInView.length} selected
+                {t('ven.products.selected').replace('{n}', String(selectedInView.length))}
               </span>
-              <button
-                onClick={() => setBulkDelConfirm(true)}
+              <button onClick={() => setBulkDelConfirm(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors text-xs font-semibold">
-                <Trash size={13}/> Delete Selected
+                <Trash size={13}/> {t('ven.products.deleteSelected')}
               </button>
               <button onClick={() => setSelected(new Set())}
                 className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors">
@@ -198,20 +188,18 @@ export default function VendorProductsPage() {
         </AnimatePresence>
       </div>
 
-      {/* Table */}
       <div className="glass-card overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-white/40">Loading products…</div>
+          <div className="p-8 text-center text-white/40">{t('ven.products.loading')}</div>
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-white/40">
-            <p className="mb-3">No products yet</p>
-            <Link href="/vendor/products/new" className="btn-primary text-sm px-4 py-2 rounded-lg">Add your first product</Link>
+            <p className="mb-3">{t('ven.products.empty')}</p>
+            <Link href="/vendor/products/new" className="btn-primary text-sm px-4 py-2 rounded-lg">{t('ven.dash.addFirst')}</Link>
           </div>
         ) : (
           <table className="glass-table">
             <thead>
               <tr>
-                {/* Select All checkbox */}
                 <th className="px-4 py-3 w-10">
                   <button onClick={toggleAll} className="text-white/50 hover:text-white transition-colors">
                     {allSelected
@@ -221,7 +209,13 @@ export default function VendorProductsPage() {
                         : <Square size={16}/>}
                   </button>
                 </th>
-                <th>Product</th><th>SKU</th><th>Price</th><th>Stock</th><th>Category</th><th>Status</th><th>Actions</th>
+                <th>{t('ven.products.colProduct')}</th>
+                <th>{t('ven.products.colSku')}</th>
+                <th>{t('ven.products.colPrice')}</th>
+                <th>{t('ven.products.colStock')}</th>
+                <th>{t('ven.products.colCategory')}</th>
+                <th>{t('ven.products.colStatus')}</th>
+                <th>{t('ven.products.colActions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -229,12 +223,9 @@ export default function VendorProductsPage() {
                 const isSelected = selected.has(p.id);
                 return (
                   <tr key={p.id} className={`transition-colors ${isSelected ? 'bg-indigo-500/8' : ''}`}>
-                    {/* Row checkbox */}
                     <td className="px-4 py-3">
                       <button onClick={() => toggleOne(p.id)} className="text-white/40 hover:text-white transition-colors">
-                        {isSelected
-                          ? <CheckSquare size={16} className="text-indigo-400"/>
-                          : <Square size={16}/>}
+                        {isSelected ? <CheckSquare size={16} className="text-indigo-400"/> : <Square size={16}/>}
                       </button>
                     </td>
                     <td>
@@ -255,7 +246,7 @@ export default function VendorProductsPage() {
                       <button onClick={() => toggleMutation.mutate({ id: p.id, is_active: !p.is_active })}
                         className={`flex items-center gap-1 text-xs font-semibold transition-colors ${p.is_active ? 'text-green-400' : 'text-white/30'}`}>
                         {p.is_active ? <ToggleRight size={18}/> : <ToggleLeft size={18}/>}
-                        {p.is_active ? 'Active' : 'Off'}
+                        {p.is_active ? t('ven.products.active') : t('ven.products.off')}
                       </button>
                     </td>
                     <td>
@@ -273,15 +264,14 @@ export default function VendorProductsPage() {
         )}
       </div>
 
-      {/* Infinite scroll sentinel */}
       <div ref={sentinelRef} className="flex justify-center py-4">
         {isFetchingNextPage && (
           <div className="flex items-center gap-2 text-white/40 text-sm">
-            <Loader2 size={16} className="animate-spin"/> Loading more…
+            <Loader2 size={16} className="animate-spin"/> {t('ven.products.loadingMore')}
           </div>
         )}
         {!hasNextPage && allProducts.length > 0 && !isLoading && (
-          <p className="text-white/20 text-xs">All {totalCount} products loaded</p>
+          <p className="text-white/20 text-xs">{t('ven.products.allLoaded').replace('{n}', String(totalCount))}</p>
         )}
       </div>
 
@@ -295,17 +285,17 @@ export default function VendorProductsPage() {
             <motion.div initial={{scale:0.9}} animate={{scale:1}} exit={{scale:0.9}}
               className="relative glass-dark rounded-2xl p-6 w-full max-w-sm"
               onClick={e => e.stopPropagation()}>
-              <h3 className="font-bold text-white text-lg mb-2">Delete Product?</h3>
-              <p className="text-white/50 text-sm mb-5">This action cannot be undone.</p>
+              <h3 className="font-bold text-white text-lg mb-2">{t('ven.products.confirmDelete')}</h3>
+              <p className="text-white/50 text-sm mb-5">{t('ven.products.cannotUndo')}</p>
               <div className="flex gap-3">
-                <button onClick={() => setDel(null)} className="flex-1 btn-glass py-2.5 rounded-xl text-sm">Cancel</button>
+                <button onClick={() => setDel(null)} className="flex-1 btn-glass py-2.5 rounded-xl text-sm">{t('ven.products.cancel')}</button>
                 <button onClick={() => del !== null && deleteMutation.mutate(del)}
                   disabled={deleteMutation.isPending}
                   className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors disabled:opacity-50">
-                  {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+                  {deleteMutation.isPending ? t('ven.products.deleting') : t('ven.products.delete')}
                 </button>
               </div>
-              <button onClick={() => setDel(null)} className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-white/10 text-white/40"><X size={16}/></button>
+              <button onClick={() => setDel(null)} className="absolute top-4 inset-e-4 p-1.5 rounded-lg hover:bg-white/10 text-white/40"><X size={16}/></button>
             </motion.div>
           </motion.div>
         )}
@@ -324,18 +314,19 @@ export default function VendorProductsPage() {
               <div className="w-12 h-12 rounded-2xl bg-red-500/20 flex items-center justify-center mb-4">
                 <Trash size={20} className="text-red-400"/>
               </div>
-              <h3 className="font-bold text-white text-lg mb-1">Delete {selectedInView.length} Products?</h3>
-              <p className="text-white/50 text-sm mb-5">This will permanently delete all selected products. This action cannot be undone.</p>
+              <h3 className="font-bold text-white text-lg mb-1">
+                {t('ven.products.bulkDelete').replace('{n}', String(selectedInView.length))}
+              </h3>
+              <p className="text-white/50 text-sm mb-5">{t('ven.products.bulkDeleteDesc')}</p>
               <div className="flex gap-3">
-                <button onClick={() => setBulkDelConfirm(false)} className="flex-1 btn-glass py-2.5 rounded-xl text-sm">Cancel</button>
-                <button
-                  onClick={() => bulkDeleteMutation.mutate(selectedInView)}
+                <button onClick={() => setBulkDelConfirm(false)} className="flex-1 btn-glass py-2.5 rounded-xl text-sm">{t('ven.products.cancel')}</button>
+                <button onClick={() => bulkDeleteMutation.mutate(selectedInView)}
                   disabled={bulkDeleteMutation.isPending}
                   className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors disabled:opacity-50">
-                  {bulkDeleteMutation.isPending ? 'Deleting…' : `Delete ${selectedInView.length}`}
+                  {bulkDeleteMutation.isPending ? t('ven.products.deleting') : `${t('ven.products.delete')} ${selectedInView.length}`}
                 </button>
               </div>
-              <button onClick={() => setBulkDelConfirm(false)} className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-white/10 text-white/40"><X size={16}/></button>
+              <button onClick={() => setBulkDelConfirm(false)} className="absolute top-4 inset-e-4 p-1.5 rounded-lg hover:bg-white/10 text-white/40"><X size={16}/></button>
             </motion.div>
           </motion.div>
         )}
